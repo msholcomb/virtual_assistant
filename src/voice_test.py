@@ -1,4 +1,4 @@
-2#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Laptop speech-to-text test: press Enter, talk, and it talks back.
 
@@ -24,9 +24,15 @@ import sounddevice as sd
 from vosk import KaldiRecognizer, Model, SetLogLevel
 
 # Path to the Piper voice model; the matching .onnx.json must sit next to it.
+# To change voices: download a new one (see README/setup notes) and update
+# this filename to match — nothing else in the script needs to change.
 PIPER_VOICE = os.path.expanduser("~/models/piper/en_US-libritts_r-medium.onnx")
-SAMPLE_RATE = 16000
-BLOCK_SIZE = 4000            # 0.25 s of audio per block
+
+SAMPLE_RATE = 16000          # what Vosk requires
+MIC_SAMPLE_RATE = 48000      # what the mic hardware actually supports; USB mics
+                             # (e.g. Blue Yeti) often reject 16000 directly. Check
+                             # with: python3 -m sounddevice
+BLOCK_SIZE = int(MIC_SAMPLE_RATE * 0.25)   # 0.25 s of audio per block
 LISTEN_TIMEOUT_S = 8.0       # give up if no full phrase in this long
 
 SetLogLevel(-1)
@@ -67,7 +73,7 @@ def listen() -> str:
     deadline = time.monotonic() + LISTEN_TIMEOUT_S
 
     with sd.RawInputStream(
-        samplerate=SAMPLE_RATE,
+        samplerate=MIC_SAMPLE_RATE,
         blocksize=BLOCK_SIZE,
         dtype="int16",
         channels=1,
@@ -76,9 +82,13 @@ def listen() -> str:
         print("Listening...")
         while time.monotonic() < deadline:
             try:
-                data = audio_q.get(timeout=0.5)
+                raw = audio_q.get(timeout=0.5)
             except queue.Empty:
                 continue
+            # Downsample from the mic's native rate to the 16 kHz Vosk expects.
+            samples = np.frombuffer(raw, dtype=np.int16)
+            factor = MIC_SAMPLE_RATE // SAMPLE_RATE
+            data = samples[::factor].tobytes()
             if rec.AcceptWaveform(data):
                 return json.loads(rec.Result()).get("text", "")
             partial = json.loads(rec.PartialResult()).get("partial", "")
@@ -93,23 +103,9 @@ def respond(text: str) -> str:
         return datetime.datetime.now().strftime("It is %I:%M %p.")
     if "hello" in words or "hi" in words:
         return "Hello Mike. Speech to text is working."
-    if "twin" in words: 
-            return "What up twin whats popping"
-    if "down" in words: 
-        return "shit im down, im trying to get some puh twin"
-    
-    
-    if "apologize" in words:
-        return "my apologies avery you are hella tough and mike should come visit you"
-    
     return f"You said: {text}"
-    
-    
 
 
-
-def spec_responses():
-    response_map = {"Hello": "Hello", "Time": datetime.datetime.now().strftime("It is %I:%M %p.")}
 def main() -> None:
     print(f"Using mic: {sd.query_devices(sd.default.device[0])['name']}")
     speak("Ready.")
@@ -124,7 +120,6 @@ def main() -> None:
             speak("Goodbye.")
             break
         speak(respond(text))
-        
 
 
 if __name__ == "__main__":
