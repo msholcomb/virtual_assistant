@@ -24,8 +24,7 @@ import sounddevice as sd
 from vosk import KaldiRecognizer, Model, SetLogLevel
 
 # Path to the Piper voice model; the matching .onnx.json must sit next to it.
-PIPER_VOICE = os.path.expanduser("~\models\piper\en_US-libritts_r-medium.onnx")
-
+PIPER_VOICE = os.path.expanduser("~/models/piper/en_US-libritts_r-medium.onnx")
 SAMPLE_RATE = 16000
 BLOCK_SIZE = 4000            # 0.25 s of audio per block
 LISTEN_TIMEOUT_S = 8.0       # give up if no full phrase in this long
