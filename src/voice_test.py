@@ -18,7 +18,7 @@ import sys
 import tempfile
 import time
 import wave
-from gpiozero import LED
+import RPi.GPIO as GPIO
 from time import sleep
 
 import numpy as np
@@ -29,9 +29,15 @@ from vosk import KaldiRecognizer, Model, SetLogLevel
 # To change voices: download a new one (see README/setup notes) and update
 # this filename to match — nothing else in the script needs to change.
 
+#gpio stuff
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
 
 
-led = LED(17)
+#setup led
+led_pin = 16
+GPIO.setup(led_pin, GPIO.OUT)
+
 PIPER_VOICE = os.path.expanduser("~/models/piper/en_US-libritts_r-medium.onnx")
 
 
@@ -48,9 +54,17 @@ SetLogLevel(-1)
 print("Loading speech model (downloads on first run)...")
 model = Model(lang="en-us")
 
+def gpio_on(pin):
+    try:
+        while True:
+            GPIO.output(pin, GPIO.HIGH)
+    finally: 
+        GPIO.cleanup()
+        
+    
 
 def speak(text: str) -> None:
-    led.on()
+   
     print(f"[assistant] {text}")
     fd, wav_path = tempfile.mkstemp(suffix=".wav")
     os.close(fd)
@@ -69,7 +83,7 @@ def speak(text: str) -> None:
         subprocess.run(["paplay", wav_path], check=True)
     finally:
         os.remove(wav_path)
-    led.off()
+    
 
 
 def listen() -> str:
