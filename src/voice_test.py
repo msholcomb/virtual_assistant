@@ -76,7 +76,28 @@ def gpio_off(pin):
     
 
 def speak(text: str) -> None:
-    gpio_on(led_pin)
+    
+    
+    #gpio stuff
+    # Configure the pin mode and setup
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(18, GPIO.OUT)
+
+    try:
+        while True:
+            GPIO.output(18, GPIO.HIGH)
+            time.sleep(1)
+            GPIO.output(18, GPIO.LOW)
+            time.sleep(1)
+
+    except KeyboardInterrupt:
+        # Captures CTRL+C gracefully
+        print("Program stopped by user")
+
+    finally:
+        # This always runs, ensuring your Pi stays safe
+        GPIO.cleanup()
+    
     print(f"[assistant] {text}")
     fd, wav_path = tempfile.mkstemp(suffix=".wav")
     os.close(fd)
