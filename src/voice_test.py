@@ -55,19 +55,14 @@ print("Loading speech model (downloads on first run)...")
 model = Model(lang="en-us")
 
 def gpio_on(pin):
-    try:
-        while True:
-            GPIO.output(pin, GPIO.HIGH)
-    finally: 
-        GPIO.cleanup()
+    
+    GPIO.output(pin, GPIO.HIGH)
+    GPIO.cleanup()
         
     
 def gpio_off(pin):
-    try:
-        while True:
-            GPIO.output(pin, GPIO.LOW)
-    finally: 
-        GPIO.cleanup()
+    GPIO.output(pin, GPIO.LOW)
+    GPIO.cleanup()
         
     
 
