@@ -62,9 +62,17 @@ def gpio_on(pin):
         GPIO.cleanup()
         
     
+def gpio_off(pin):
+    try:
+        while True:
+            GPIO.output(pin, GPIO.LOW)
+    finally: 
+        GPIO.cleanup()
+        
+    
 
 def speak(text: str) -> None:
-   
+    gpio_on(led_pin)
     print(f"[assistant] {text}")
     fd, wav_path = tempfile.mkstemp(suffix=".wav")
     os.close(fd)
@@ -83,6 +91,7 @@ def speak(text: str) -> None:
         subprocess.run(["paplay", wav_path], check=True)
     finally:
         os.remove(wav_path)
+    gpio_off(led_pin)
     
 
 
