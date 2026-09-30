@@ -54,11 +54,12 @@ def speak(text: str) -> None:
             input=text.encode(),
             check=True,
         )
-        with wave.open(wav_path, "rb") as w:
-            rate, channels = w.getframerate(), w.getnchannels()
-            audio = np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16)
-        sd.play(audio.reshape(-1, channels), samplerate=rate)
-        sd.wait()
+        # Play via paplay (PipeWire/PulseAudio) rather than sd.play(), since
+        # this system's PortAudio build has no Pulse host API and can only
+        # see raw ALSA hw: devices -- it can't reach a Bluetooth sink at all.
+        # paplay talks to PipeWire/Pulse directly and uses whatever sink is
+        # currently set as default (see: pactl set-default-sink).
+        subprocess.run(["paplay", wav_path], check=True)
     finally:
         os.remove(wav_path)
 
