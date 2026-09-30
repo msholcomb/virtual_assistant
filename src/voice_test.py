@@ -55,12 +55,15 @@ print("Loading speech model (downloads on first run)...")
 model = Model(lang="en-us")
 
 def gpio_on(pin):
-    
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(led_pin, GPIO.OUT)
     GPIO.output(pin, GPIO.HIGH)
     GPIO.cleanup()
         
     
 def gpio_off(pin):
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(led_pin, GPIO.OUT)
     GPIO.output(pin, GPIO.LOW)
     GPIO.cleanup()
         
