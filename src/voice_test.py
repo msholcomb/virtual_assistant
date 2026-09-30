@@ -14,7 +14,6 @@ import json
 import os
 import queue
 import subprocess
-import sys
 import tempfile
 import time
 import wave
@@ -23,6 +22,7 @@ from time import sleep
 
 import numpy as np
 import sounddevice as sd
+from piper.voice import PiperVoice
 from vosk import KaldiRecognizer, Model, SetLogLevel
 
 # Path to the Piper voice model; the matching .onnx.json must sit next to it.
@@ -54,6 +54,12 @@ SetLogLevel(-1)
 print("Loading speech model (downloads on first run)...")
 model = Model(lang="en-us")
 
+print("Loading Piper voice...")
+# Loaded ONCE here, at startup — not inside speak(). Reloading the neural
+# voice model from disk on every single reply was the main source of reply
+# delay; the model itself doesn't change between replies.
+piper_voice = PiperVoice.load(PIPER_VOICE)
+
 def gpio_on(pin):
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(led_pin, GPIO.OUT)
@@ -75,12 +81,8 @@ def speak(text: str) -> None:
     fd, wav_path = tempfile.mkstemp(suffix=".wav")
     os.close(fd)
     try:
-        # Run Piper through the current interpreter so it works inside a venv.
-        subprocess.run(
-            [sys.executable, "-m", "piper", "-m", PIPER_VOICE, "-f", wav_path],
-            input=text.encode(),
-            check=True,
-        )
+        with wave.open(wav_path, "wb") as wav_file:
+            piper_voice.synthesize(text, wav_file)
         # Play via paplay (PipeWire/PulseAudio) rather than sd.play(), since
         # this system's PortAudio build has no Pulse host API and can only
         # see raw ALSA hw: devices -- it can't reach a Bluetooth sink at all.
