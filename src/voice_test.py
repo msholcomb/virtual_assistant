@@ -28,6 +28,9 @@ from vosk import KaldiRecognizer, Model, SetLogLevel
 # this filename to match — nothing else in the script needs to change.
 PIPER_VOICE = os.path.expanduser("~/models/piper/en_US-libritts_r-medium.onnx")
 
+
+OUTPUT_DEVICE = 0   #bt headphones are 0 index in sound devices on rpi
+
 SAMPLE_RATE = 16000          # what Vosk requires
 MIC_SAMPLE_RATE = 48000      # what the mic hardware actually supports; USB mics
                              # (e.g. Blue Yeti) often reject 16000 directly. Check
