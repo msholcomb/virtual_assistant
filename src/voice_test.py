@@ -82,7 +82,14 @@ def speak(text: str) -> None:
     os.close(fd)
     try:
         with wave.open(wav_path, "wb") as wav_file:
-            piper_voice.synthesize(text, wav_file)
+            # Newer piper-tts returns an iterable of raw audio chunks rather
+            # than writing directly into the wave file, so we set the WAV
+            # header ourselves (channels/width/rate) and write the chunks in.
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(2)  # 16-bit audio
+            wav_file.setframerate(piper_voice.config.sample_rate)
+            for chunk in piper_voice.synthesize(text):
+                wav_file.writeframes(chunk.audio_int16_bytes)
         # Play via paplay (PipeWire/PulseAudio) rather than sd.play(), since
         # this system's PortAudio build has no Pulse host API and can only
         # see raw ALSA hw: devices -- it can't reach a Bluetooth sink at all.
