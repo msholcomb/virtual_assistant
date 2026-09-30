@@ -18,6 +18,8 @@ import sys
 import tempfile
 import time
 import wave
+from gpiozero import LED
+from time import sleep
 
 import numpy as np
 import sounddevice as sd
@@ -26,6 +28,10 @@ from vosk import KaldiRecognizer, Model, SetLogLevel
 # Path to the Piper voice model; the matching .onnx.json must sit next to it.
 # To change voices: download a new one (see README/setup notes) and update
 # this filename to match — nothing else in the script needs to change.
+
+
+
+led = LED(17)
 PIPER_VOICE = os.path.expanduser("~/models/piper/en_US-libritts_r-medium.onnx")
 
 
@@ -44,6 +50,7 @@ model = Model(lang="en-us")
 
 
 def speak(text: str) -> None:
+    led.on()
     print(f"[assistant] {text}")
     fd, wav_path = tempfile.mkstemp(suffix=".wav")
     os.close(fd)
@@ -62,6 +69,7 @@ def speak(text: str) -> None:
         subprocess.run(["paplay", wav_path], check=True)
     finally:
         os.remove(wav_path)
+    led.off()
 
 
 def listen() -> str:
